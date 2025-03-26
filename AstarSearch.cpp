@@ -9,7 +9,7 @@ using namespace std;
 vector<vector<int>> Clause;
 
 //readCSV
-vector<vector<int>> readCSV(const string &filename, int &D){
+vector<vector<int>> readCSV(const string &filename){
     Clause.clear(); //初始化
     ifstream file(filename);
 
@@ -42,10 +42,20 @@ vector<vector<int>> readCSV(const string &filename, int &D){
 
     }
     file.close();
-    D = 50;
     return Clause;
 }
 
+/*int getD(const vector<vector<int>> &Clause)
+{
+    int D = 0;
+    for(const auto &clauses : Clause){ //使用&是為了避免創建新的拷貝，減少記憶體使用提高效能
+        for(int element : clauses){
+            max(D, abs(element));
+        }
+    }
+    return D;
+}
+*/
 struct Node{ //節點
     vector<int> assignment; //該變量是否已經賦值了(有沒有確認sign是1還是0了?)
     int g; // real cost
@@ -133,10 +143,11 @@ int astar(int D)
                 for(int val : current.assignment){
                     cout << val << " ";
                 }
-                ofstream out("C:/Astar/result.txt");
+                ofstream out("result.txt", ios::app);
                 for(int val : current.assignment){
                     out << val << " ";
                 }
+                out << endl;
                 out.close();
                 return 1; //有解
             }
@@ -192,7 +203,7 @@ int astar(int D)
             }
         }
     }
-    ofstream out("C:/Astar/TEST_DATA/result.txt");
+    ofstream out("result.txt", ios::app); //不覆蓋原先的內容
     out << "No solution";
     out.close();
     return 0;
@@ -200,8 +211,16 @@ int astar(int D)
 
 int main()
 {
-    int D;
-    Clause = readCSV("3SAT_Dim=50.csv", D);
+    vector<int> dim = {10, 20, 30, 40, 50};
+
+    for(int D : dim){
+        string filename = "3SAT_Dim=" + to_string(D) + ".csv";
+        Clause = readCSV(filename);
+        int result = astar(D);
+        cout << (result ? "Solution found!" : "No solution") << endl;
+    }
+
+
     /*確認是否有讀入
     for(const auto &row : csv_data){
         for(const auto &cell : row){
@@ -210,7 +229,7 @@ int main()
         cout << endl;
     }
     */
-    int result = astar(D);
-    cout << (result ? "Solution found!" : "No solution") << endl;
+    //int D = getD(Clause);
+
     return 0;
 }
