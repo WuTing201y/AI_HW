@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1742649510 source:c:\astar\readcsv\main.cpp
+	<iostream>
+	<fstream>
+	<sstream>
+	<vector>
+	<string>
+	<queue>
+
+1742979206 source:c:\astar\0322\main.cpp
+	<iostream>
+	<fstream>
+	<sstream>
+	<vector>
+	<string>
+	<queue>
+	<direct.h>
+
