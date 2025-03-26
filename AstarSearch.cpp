@@ -42,7 +42,7 @@ vector<vector<int>> readCSV(const string &filename, int &D){
 
     }
     file.close();
-    D = 10;
+    D = 50;
     return Clause;
 }
 
@@ -192,7 +192,7 @@ int astar(int D)
             }
         }
     }
-    ofstream out("C:/Astar/result.txt");
+    ofstream out("C:/Astar/TEST_DATA/result.txt");
     out << "No solution";
     out.close();
     return 0;
@@ -201,7 +201,7 @@ int astar(int D)
 int main()
 {
     int D;
-    Clause = readCSV("C:/Astar/3SAT_Dim=10.csv", D);
+    Clause = readCSV("3SAT_Dim=50.csv", D);
     /*確認是否有讀入
     for(const auto &row : csv_data){
         for(const auto &cell : row){
