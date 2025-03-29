@@ -5,9 +5,16 @@
 #include <string>
 #include <queue>
 #include <direct.h>
+#include <chrono>
 
 using namespace std;
 vector<vector<int>> Clause;
+
+struct SearchResult {
+    int cost;
+    int expandedNodes;
+    double runningTime;
+};
 
 //readCSV
 vector<vector<int>> readCSV(const string &filename){
@@ -62,8 +69,7 @@ struct Node{ //節點
     int g; // real cost
     int h; // 估計cost
     int f; //total cost
-
-    Node(int D) : assignment(D, -1), g(0), h(0), f(0){}
+    Node(int D) : assignment(D, -1), g(0), h(0), f(0) {}
 
     bool operator < (const Node& other) const{
         return f > other.f;  //以最小的f為優先
@@ -97,15 +103,27 @@ int heuristic(const Node &node, const vector<vector<int>> &clauses)
 }
 int astar(int D)
 {
+    SearchResult result;
+    result.cost = 0;
+    result.expandedNodes = 0;
+    result.runningTime = 0.0;
+
     priority_queue<Node> pq;
     Node start(D);
     start.h = heuristic(start, Clause);
     start.f = start.g + start.h;
     pq.push(start);
 
+    auto startTime = chrono::high_resolution_clock::now();
+
     while(!pq.empty()){
+        /*if (result.expandedNodes >= D * D * D) {
+            break; // 超過D^3
+        }
+*/
         Node current = pq.top();
         pq.pop();
+        result.expandedNodes++;
 
         /*//測試輸出
         cout << "Processing node: ";
@@ -141,6 +159,8 @@ int astar(int D)
                 }
             }
             if(all_ok){
+                result.cost = current.g;
+
                 for(int val : current.assignment){
                     cout << val << " ";
                 }
@@ -149,6 +169,13 @@ int astar(int D)
                     out << val << " ";
                 }
                 out << endl;
+
+                auto endTime = chrono::high_resolution_clock::now();
+                result.runningTime = chrono::duration<double>(endTime - startTime).count();
+
+                out <<"D = " << D << "\t" << "cost = " <<result.cost << "\t"
+                        <<  "expanded Node = " <<result.expandedNodes << "\t"
+                        << "running Time = " <<result.runningTime <<"\n";
                 out.close();
                 return 1; //有解
             }
@@ -204,6 +231,7 @@ int astar(int D)
             }
         }
     }
+
     ofstream out("result.txt", ios::app); //不覆蓋原先的內容
     out << "No solution";
     out.close();
@@ -213,12 +241,15 @@ int astar(int D)
 int main()
 {
     vector<int> dim = {10, 20, 30, 40, 50};
+    //vector<int> dim = {20};
 
     for(int D : dim){
         string filename = "3SAT_Dim=" + to_string(D) + ".csv";
         Clause = readCSV(filename);
         int result = astar(D);
         cout << (result ? "Solution found!" : "No solution") << endl;
+
+
     }
 
 
