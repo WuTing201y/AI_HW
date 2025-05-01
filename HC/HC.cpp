@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <ctime>
 #include <string>
+#include <chrono>
 using namespace std;
 
 struct City{
@@ -63,11 +64,14 @@ double hc(vector<int>& path, const vector<vector<double>>& dist_map, int n)
 	        swap(path[i], path[j]);  // 還原
 	    }
 	}
+	
 	return cur_dis;
 }
 
 int main()
 {
+	using namespace chrono;
+
 	vector<int> dim = {50, 100, 200, 500, 1000};
 
 	//讀取資料
@@ -101,18 +105,32 @@ int main()
 
 		//建立初始順序
 		vector<int> path;
+		auto start = high_resolution_clock::now();  // 開始計時
 		double best_dis = hc(path, dist_map, n);
+		auto end = high_resolution_clock::now();    // 結束計時
+		duration<double> duration = end - start;
+		
+		// 儲存距離
+		string dist_out = "result_distance_D=" + to_string(D) + ".txt";
+		ofstream fout_dist(dist_out, ios::app);
+		fout_dist << best_dis << endl;
+		fout_dist.close();
 
-		//cout << "\nfinal best total distance is " << best_dis << endl;
+		// 儲存時間
+		string time_out = "result_time_D=" + to_string(D) + ".txt";
+		ofstream fout_time(time_out, ios::app);
+		fout_time << duration.count() << " seconds" << endl;
+		fout_time.close();
 
 		string out_filename = "output_Dim=" + to_string(D) + ".txt";
-		ofstream fout(out_filename);
+		ofstream fout(out_filename, ios::app);
 
 		for(int city : path){
 			fout << city + 1 << " "; //對齊城市編號
 		}
+		fout << endl;
 		fout.close();
 		
-		cout << "completed" << endl;
+		//cout << "completed" << endl;
 	}
 }
