@@ -105,11 +105,11 @@ int main()
 
 		//建立初始順序
 		vector<int> path;
-		auto start = high_resolution_clock::now();  // 開始計時
+		//auto start = high_resolution_clock::now();  // 開始計時
 		double best_dis = hc(path, dist_map, n, D);
-		auto end = high_resolution_clock::now();    // 結束計時
-		duration<double> duration = end - start;
-		
+		//auto end = high_resolution_clock::now();    // 結束計時
+		//duration<double> duration = end - start;
+		/*
 		 //儲存距離
 		string dist_out = "result_distance_D=" + to_string(D) + ".txt";
 		ofstream fout_dist(dist_out, ios::app);
@@ -121,7 +121,7 @@ int main()
 		ofstream fout_time(time_out, ios::app);
 		fout_time << duration.count() << " seconds" << endl;
 		fout_time.close();
-
+*/
 		string out_filename = "output_Dim=" + to_string(D) + ".txt";
 		ofstream fout(out_filename);
 
