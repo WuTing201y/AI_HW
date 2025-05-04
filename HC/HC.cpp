@@ -32,7 +32,7 @@ double calculate_total_dis(const vector<int>& path, const vector<vector<double>>
 	return total;
 }
 
-double hc(vector<int>& path, const vector<vector<double>>& dist_map, int n)
+double hc(vector<int>& path, const vector<vector<double>>& dist_map, int n, int D)
 {
 	for(int i = 0; i < n; i++){
 		path.push_back(i);
@@ -47,7 +47,7 @@ double hc(vector<int>& path, const vector<vector<double>>& dist_map, int n)
 	//建立亂數分布器
 	uniform_int_distribution<> dist(0, n-1);
 
-	for (int t = 0; t < 10000; t++) {
+	for (int t = 0; t < 1000*D; t++) {
 	    int i = dist(g);
 	    int j = dist(g);
 	    while (i == j)
@@ -105,12 +105,12 @@ int main()
 
 		//建立初始順序
 		vector<int> path;
-		auto start = high_resolution_clock::now();  // 開始計時
-		double best_dis = hc(path, dist_map, n);
-		auto end = high_resolution_clock::now();    // 結束計時
-		duration<double> duration = end - start;
+		//auto start = high_resolution_clock::now();  // 開始計時
+		double best_dis = hc(path, dist_map, n, D);
+		//auto end = high_resolution_clock::now();    // 結束計時
+		//duration<double> duration = end - start;
 		
-		// 儲存距離
+		/* 儲存距離
 		string dist_out = "result_distance_D=" + to_string(D) + ".txt";
 		ofstream fout_dist(dist_out, ios::app);
 		fout_dist << best_dis << endl;
@@ -121,9 +121,9 @@ int main()
 		ofstream fout_time(time_out, ios::app);
 		fout_time << duration.count() << " seconds" << endl;
 		fout_time.close();
-
+*/
 		string out_filename = "output_Dim=" + to_string(D) + ".txt";
-		ofstream fout(out_filename, ios::app);
+		ofstream fout(out_filename);
 
 		for(int city : path){
 			fout << city + 1 << " "; //對齊城市編號
