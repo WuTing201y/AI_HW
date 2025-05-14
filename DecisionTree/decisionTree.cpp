@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <chrono>
 using namespace std;
 using Vec  = std::vector<int>;         // 一筆 (離散) 特徵(每row由左至右)
 using Mat  = std::vector<Vec>;         // 多筆特徵 特徵矩陣
@@ -168,6 +169,9 @@ int main()
     readCSV("mnist_train.csv", X_train, Y_train);
     readCSV("mnist_test.csv", X_test, Y_trash);
 
+    using namespace chrono;
+    auto start = high_resolution_clock::now();  // 開始計時
+
     Vec attrs(X_train[0].size());
     iota(attrs.begin(), attrs.end(), 0);
 
@@ -175,6 +179,10 @@ int main()
     dt.fit(X_train, Y_train, attrs);
 
     Vec pred_train;
+
+    auto end = high_resolution_clock::now();    // 結束計時
+	duration<double> duration = end - start;
+
     for(auto& x : X_train){
         pred_train.push_back(dt.predict(x));
     }
@@ -185,5 +193,5 @@ int main()
         pred_test.push_back(dt.predict(x));
     }
     savePredict("result_test.csv", pred_test);
-    cout << "done" << endl;
+    cout << "running time: " << duration.count() << endl;
 }
