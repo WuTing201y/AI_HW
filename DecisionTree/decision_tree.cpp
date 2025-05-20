@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// 決策樹節點結構
+// 節點結構
 struct Node {
     bool isLeaf;            // 是否為葉節點
     int label;              // 如果是葉節點，儲存預測的類別標籤
@@ -12,9 +12,12 @@ struct Node {
     Node(): isLeaf(false), label(-1), featureIndex(-1), threshold(0.0), left(nullptr), right(nullptr) {}
 };
 
-// 全域變數保存資料集，以方便遞迴中訪問
+// 全域變數
 static vector<vector<int>> trainFeatures;  // 訓練特徵資料 [樣本索引][特徵索引]
 static vector<int> trainLabels;            // 訓練標籤資料
+static vector<int> testLabels;            // 測試標籤資料
+static vector<int> trainPred;            // 測試標籤資料
+static vector<int> testPred;            // 測試標籤資料
 static int numFeatures = 0;               // 特徵維度 (預期 784)
 static int numClasses = 0;                // 類別數量 (MNIST 預期 10)
 
@@ -44,7 +47,7 @@ Node* buildTree(const vector<int>& dataIndexList) {
         return node;
     }
     // 計算當前節點的類別分佈，用於計算不純度
-    vector<int> labelCount(numClasses, 0);
+    vector<int> labelCount(numClasses, 0); //記錄此節點每個類別出現的次數
     for (int idx : dataIndexList) {
         labelCount[trainLabels[idx]]++;
     }
@@ -146,6 +149,7 @@ Node* buildTree(const vector<int>& dataIndexList) {
     vector<int> rightIndices;
     leftIndices.reserve(N);
     rightIndices.reserve(N);
+    // 如果樣本在第 bestFeatureIndex 維度上的值 ≤ bestThreshold，就歸到左子樹；否則就到右子樹
     for (int idx : dataIndexList) {
         if ((double)trainFeatures[idx][bestFeatureIndex] <= bestThreshold) {
             leftIndices.push_back(idx);
@@ -187,11 +191,45 @@ void deleteTree(Node* node) {
     // 最後刪除自己
     delete node;
 }
+int countNodes(Node* node) {
+    if (!node) return 0;
+    return 1 + countNodes(node->left) + countNodes(node->right);
+}
+void sumLeafDepth(Node* node, int depth, int& totalDepth, int& leafCount) {
+    if (!node) return;
+    if (node->isLeaf) {
+        totalDepth += depth;
+        leafCount++;
+        return;
+    }
+    sumLeafDepth(node->left, depth + 1, totalDepth, leafCount);
+    sumLeafDepth(node->right, depth + 1, totalDepth, leafCount);
+}
+double compute_macro_f1(const vector<int>& true_labels, const vector<int>& pred_labels) {
+    int m = 10;
+    double macro_f1 = 0.0;
 
+    for (int c = 0; c < m; ++c) {
+        int TP = 0, FP = 0, FN = 0;
+        for (size_t i = 0; i < true_labels.size(); ++i) {
+            if (pred_labels[i] == c && true_labels[i] == c) TP++;
+            else if (pred_labels[i] == c && true_labels[i] != c) FP++;
+            else if (pred_labels[i] != c && true_labels[i] == c) FN++;
+        }
+
+        double precision = (TP + FP == 0) ? 0 : (double)TP / (TP + FP);
+        double recall = (TP + FN == 0) ? 0 : (double)TP / (TP + FN);
+        double f1 = (precision + recall == 0) ? 0 : 2 * precision * recall / (precision + recall);
+
+        macro_f1 += f1;
+    }
+
+    return macro_f1 / m;
+}
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(NULL);
-
+    
     // 檔案名稱，可根據需要修改或使用命令列參數
     string trainFile = "mnist_train.csv";
     string testFile = "mnist_test.csv";
@@ -265,14 +303,19 @@ int main() {
                 features.push_back(stoi(token));
             }
         }
-        // 測試資料無標籤，如特徵數不足784同樣補0
+        // 最後一個值為標籤
+        int label = features.back();
+        features.pop_back();
+        // 如果特徵數不足784，補齊0
         if (features.size() < 784) {
             features.resize(784, 0);
         }
+        // 記錄此樣本的特徵和標籤
         testFeatures.push_back(features);
+        testLabels.push_back(label);
     }
     finTest.close();
-    // 如未能從訓練資料獲得特徵數，從測試資料設定（以防只有測試輸入的情況）
+    // 如未能從訓練資料獲得特徵數，從測試資料設定
     if (numFeatures == 0 && !testFeatures.empty()) {
         numFeatures = testFeatures[0].size();
     }
@@ -294,6 +337,7 @@ int main() {
     ofstream foutTrain("result_train.csv");
     for (size_t i = 0; i < trainFeatures.size(); ++i) {
         int predLabel = predict(root, trainFeatures[i]);
+        trainPred.push_back(predLabel);
         foutTrain << predLabel << "\n";
     }
     foutTrain.close();
@@ -302,15 +346,30 @@ int main() {
     ofstream foutTest("result_test.csv");
     for (size_t i = 0; i < testFeatures.size(); ++i) {
         int predLabel = predict(root, testFeatures[i]);
+        testPred.push_back(predLabel);
         foutTest << predLabel << "\n";
     }
     foutTest.close();
 
-    deleteTree(root);
-    // 釋放決策樹節點佔用的記憶體
+    // 計算 Macro F1-score
+    double f1_train = compute_macro_f1(trainLabels, trainPred);
+    double f1_test = compute_macro_f1(testLabels, testPred);
+    cout << "Train Macro F1 Score: " << f1_train << endl;
+    cout << "Test  Macro F1 Score: " << f1_test << endl;
 
+    //計算節點數量
+    cout << "Total nodes in tree: " << countNodes(root) << endl;
+    //計算平均深度
+    int totalDepth = 0, leafCount = 0;
+    sumLeafDepth(root, 0, totalDepth, leafCount);
+    double avgLeafDepth = (double)totalDepth / leafCount;
+    cout << "Average leaf depth: " << avgLeafDepth << endl;
+    cout << "Node size:" << sizeof(Node) << endl;
+    
+    deleteTree(root);// 釋放決策樹節點佔用的記憶體
+    
     cout << "running time: " << duration.count() << endl;
+    
+
     return 0;
 }
-
-
