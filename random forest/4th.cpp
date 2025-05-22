@@ -200,7 +200,7 @@ bool loadCSV(const string& file, MatI& X, VecI& y){
         cerr << "Cannot open the file: " << file << "\\n";
         return false;
     }
-    string line; getline(fin,line); // skip header
+    string line;
     while(getline(fin,line)){
         stringstream ss(line); string tok; VecI vec;
         vec.reserve(FEATURE_DIM);
